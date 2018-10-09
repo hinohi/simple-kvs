@@ -31,29 +31,34 @@ impl Server {
     }
 
     fn client_handler(&self, stream: TcpStream) {
-        let mut reader = BufReader::new(&stream);
-        let mut buf = String::new();
-        if let Err(e) = reader.read_line(&mut buf) {
-            println!("{}", e);
-            return;
-        }
-        let mut writer = BufWriter::new(stream.try_clone().unwrap());
-        let cmd = match Cmd::from_string(buf) {
-            Ok(c) => c,
-            Err(e) => {
-                let mut msg = e + "\n";
-                writer.write(&mut msg.as_bytes()).unwrap();
-                writer.flush().unwrap();
-                return;
+        let mut reader = BufReader::new(stream.try_clone().unwrap());
+        let mut writer = BufWriter::new(stream);
+        loop {
+            let mut buf = String::new();
+            if let Err(e) = reader.read_line(&mut buf) {
+                println!("{}", e);
+                break;
             }
-        };
-        let ret;
-        if let Some(v) = self.db.execute(cmd) {
-            ret = format!("{}\n", v);
-        } else {
-            ret = "\n".to_string();
+            if buf.is_empty() {
+                break;
+            }
+            let cmd = match Cmd::from_string(buf) {
+                Ok(c) => c,
+                Err(e) => {
+                    let mut msg = e + "\n";
+                    writer.write(&mut msg.as_bytes()).unwrap();
+                    writer.flush().unwrap();
+                    break;
+                }
+            };
+            let ret;
+            if let Some(v) = self.db.execute(cmd) {
+                ret = format!("{}\n", v);
+            } else {
+                ret = "\n".to_string();
+            }
+            writer.write(&mut ret.as_bytes()).unwrap();
+            writer.flush().unwrap();
         }
-        writer.write(&mut ret.as_bytes()).unwrap();
-        writer.flush().unwrap();
     }
 }

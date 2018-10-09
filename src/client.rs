@@ -1,4 +1,4 @@
-use std::io::{BufReader, BufWriter, Read, Write};
+use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::net::TcpStream;
 
 pub struct Client {
@@ -12,16 +12,22 @@ impl Client {
         }
     }
 
-    pub fn request(&self, cmd: &str) {
+    pub fn request(&self, cmd_list: Vec<String>) {
         let stream = TcpStream::connect(&self.addr).unwrap();
-        let mut writer = BufWriter::new(&stream);
-        let mut bytes = Vec::from(cmd);
-        bytes.push('\n' as u8);
-        writer.write(&mut bytes).unwrap();
-        writer.flush().unwrap();
         let mut reader = BufReader::new(stream.try_clone().unwrap());
-        let mut buf = Vec::new();
-        reader.read_to_end(&mut buf).unwrap();
-        print!("{}", String::from_utf8(buf).unwrap());
+        let mut writer = BufWriter::new(stream);
+        for cmd in cmd_list {
+            let mut bytes = Vec::from(cmd.clone());
+            bytes.push('\n' as u8);
+            writer.write(&mut bytes).unwrap();
+            writer.flush().unwrap();
+            let mut buf = String::new();
+            reader.read_line(&mut buf).unwrap();
+            if buf.is_empty() {
+                println!("connection closed by peer");
+                break;
+            }
+            print!(r#""{}" = {}"#, cmd, buf);
+        }
     }
 }

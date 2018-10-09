@@ -6,6 +6,24 @@ mod server;
 use client::Client;
 use server::Server;
 
+fn run_server(addr: String) {
+    let server = Server::new(&addr);
+    server.run_forever();
+}
+
+fn run_client(addr: String, cmd: Option<String>) {
+    use std::io::{stdin, BufRead, BufReader};
+    let client = Client::new(&addr);
+
+    if let Some(cmd) = cmd {
+        client.request(vec![cmd]);
+        return;
+    }
+    let cin = BufReader::new(stdin());
+    let cmd_list = cin.lines().map(|x| x.unwrap()).collect();
+    client.request(cmd_list);
+}
+
 fn main() {
     use std::env;
 
@@ -18,12 +36,15 @@ fn main() {
         println!("{}", usage);
         return;
     }
+    let addr = args[2].to_string();
     if args[1] == "server" {
-        let server = Server::new(&args[2]);
-        server.run_forever();
-    } else if args[1] == "client" && args.len() >= 4 {
-        let client = Client::new(&args[2]);
-        client.request(&args[3]);
+        run_server(addr);
+    } else if args[1] == "client" {
+        if let Some(cmd) = args.get(3) {
+            run_client(addr, Some(cmd.to_string()));
+        } else {
+            run_client(addr, None);
+        }
     } else {
         println!("{}", usage);
     }
