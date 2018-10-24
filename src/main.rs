@@ -7,7 +7,7 @@ use client::Client;
 use server::Server;
 
 fn run_server(addr: String) {
-    let server = Server::new(&addr);
+    let server = Server::new(&addr, 4);
     server.run_forever();
 }
 
