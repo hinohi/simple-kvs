@@ -18,6 +18,8 @@ impl DB {
         match cmd {
             Cmd::GET(key) => self.do_get(key),
             Cmd::SET(key, value) => self.do_set(key, value),
+            Cmd::ADD(key, value) => self.do_add(key, value),
+            Cmd::DELETE(key) => self.do_delete(key),
         }
     }
 
@@ -29,5 +31,17 @@ impl DB {
     fn do_set(&self, key: String, value: i64) -> Option<i64> {
         let mut db = self.db.write().unwrap();
         db.insert(key, value)
+    }
+
+    fn do_add(&self, key: String, value: i64) -> Option<i64> {
+        let mut db = self.db.write().unwrap();
+        let v = db.entry(key).or_insert(0);
+        *v += value;
+        Some(*v)
+    }
+
+    fn do_delete(&self, key: String) -> Option<i64> {
+        let mut db = self.db.write().unwrap();
+        db.remove(&key)
     }
 }
