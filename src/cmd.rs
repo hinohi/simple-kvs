@@ -6,11 +6,12 @@ pub enum Cmd {
     SET(String, i64),
     ADD(String, i64),
     DELETE(String),
+    COUNT,
 }
 
 impl Cmd {
     pub fn from_string(s: String) -> Result<Self, String> {
-        let mut it = s.split(' ');
+        let mut it = s.trim().split(' ');
         match (it.next(), it.next()) {
             (Some("GET"), Some(key)) => {
                 let key = key.trim().to_string();
@@ -42,6 +43,7 @@ impl Cmd {
                 let key = key.trim().to_string();
                 return Ok(Cmd::DELETE(key));
             }
+            (Some("COUNT"), None) => return Ok(Cmd::COUNT),
             _ => return Err("invalid command".to_string()),
         }
     }

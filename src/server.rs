@@ -40,7 +40,7 @@ impl Server {
         Server {
             addr: String::from(addr),
             num,
-            db: Arc::new(DB::new()),
+            db: Arc::new(DB::new(16)),
         }
     }
 
