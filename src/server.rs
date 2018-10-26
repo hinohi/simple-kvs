@@ -8,26 +8,23 @@ use std::thread;
 use cmd::Cmd;
 use db::DB;
 
-struct SharedReceiver(Arc<Mutex<Receiver<Option<TcpStream>>>>);
+struct SharedReceiver<T>(Arc<Mutex<Receiver<T>>>);
 
-impl Iterator for SharedReceiver {
-    type Item = TcpStream;
+impl<T> Iterator for SharedReceiver<T> {
+    type Item = T;
     fn next(&mut self) -> Option<Self::Item> {
         let guard = self.0.lock().unwrap();
-        match guard.recv() {
-            Ok(Some(stream)) => Some(stream),
-            _ => None,
-        }
+        guard.recv().ok()
     }
 }
 
-impl Clone for SharedReceiver {
+impl<T> Clone for SharedReceiver<T> {
     fn clone(&self) -> Self {
         SharedReceiver(Arc::clone(&self.0))
     }
 }
 
-fn shared_channel() -> (Sender<Option<TcpStream>>, SharedReceiver) {
+fn shared_channel<T>() -> (Sender<T>, SharedReceiver<T>) {
     let (sender, receiver) = channel();
     (sender, SharedReceiver(Arc::new(Mutex::new(receiver))))
 }
@@ -68,9 +65,13 @@ impl Server {
     }
 }
 
-fn worker(db: Arc<DB>, receiver: SharedReceiver) {
-    for stream in receiver {
-        client_handler(&db, stream);
+fn worker(db: Arc<DB>, receiver: SharedReceiver<Option<TcpStream>>) {
+    for i in receiver {
+        if let Some(stream) = i {
+            client_handler(&db, stream);
+        } else {
+            break;
+        }
     }
 }
 
