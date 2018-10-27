@@ -48,7 +48,7 @@ impl DB {
     fn do_add(&self, key: String, value: i64) -> Option<i64> {
         let mut db = self.dbs[self.key_hash(&key)].write().unwrap();
         let v = db.entry(key).or_insert(0);
-        *v += value;
+        *v = v.wrapping_add(value);
         Some(*v)
     }
 
@@ -101,5 +101,12 @@ mod tests {
         assert_eq!(db.execute(Cmd::ADD("c".to_string(), -1)), Some(-1));
         assert_eq!(db.execute(Cmd::COUNT), Some(2));
         assert_eq!(db.execute(Cmd::GET("c".to_string())), Some(-1));
+    }
+    #[test]
+    fn overflow_add() {
+        use std::i64;
+        let db = DB::new(1);
+        db.execute(Cmd::SET("key".to_string(), i64::MAX));
+        assert_eq!(db.execute(Cmd::ADD("key".to_string(), 1)), Some(i64::MIN));
     }
 }
