@@ -1,15 +1,6 @@
-mod client;
-mod cmd;
-mod db;
-mod server;
+extern crate simple_kvs;
 
-use client::Client;
-use server::Server;
-
-fn run_server(addr: String) {
-    let server = Server::new(&addr, 16);
-    server.run_forever();
-}
+use simple_kvs::Client;
 
 fn run_client(addr: String, cmd: Option<String>) {
     use std::io::{stdin, BufRead, BufReader};
@@ -29,23 +20,16 @@ fn main() {
 
     let args: Vec<String> = env::args().collect();
     let usage = r#"Usage:
-    ./cmd server addr
     ./cmd client addr "cmd string""#;
 
-    if args.len() < 3 {
+    if args.len() <= 2 {
         println!("{}", usage);
         return;
     }
-    let addr = args[2].to_string();
-    if args[1] == "server" {
-        run_server(addr);
-    } else if args[1] == "client" {
-        if let Some(cmd) = args.get(3) {
-            run_client(addr, Some(cmd.to_string()));
-        } else {
-            run_client(addr, None);
-        }
+    let addr = args[1].to_string();
+    if let Some(cmd) = args.get(2) {
+        run_client(addr, Some(cmd.to_string()));
     } else {
-        println!("{}", usage);
+        run_client(addr, None);
     }
 }
