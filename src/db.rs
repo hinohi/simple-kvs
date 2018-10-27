@@ -58,11 +58,48 @@ impl DB {
     }
     fn do_count(&self) -> Option<i64> {
         let mut count = 0;
-        for (i, db) in self.dbs.iter().enumerate() {
+        for db in &self.dbs {
             let db = db.read().unwrap();
             count += db.len();
-            println!("DB size id={} count={}", i, db.len());
         }
         Some(count as i64)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use cmd::Cmd;
+    use db::DB;
+
+    #[test]
+    fn simple_cmd_execute() {
+        let db = DB::new(1);
+        assert_eq!(db.execute(Cmd::COUNT), Some(0));
+        assert_eq!(db.execute(Cmd::GET("a".to_string())), None);
+        assert_eq!(db.execute(Cmd::DELETE("a".to_string())), None);
+        assert_eq!(db.execute(Cmd::SET("a".to_string(), 3)), None);
+        assert_eq!(db.execute(Cmd::COUNT), Some(1));
+        assert_eq!(db.execute(Cmd::GET("a".to_string())), Some(3));
+        assert_eq!(db.execute(Cmd::SET("b".to_string(), 10)), None);
+        assert_eq!(db.execute(Cmd::COUNT), Some(2));
+        assert_eq!(db.execute(Cmd::GET("b".to_string())), Some(10));
+        assert_eq!(db.execute(Cmd::SET("b".to_string(), -42)), Some(10));
+        assert_eq!(db.execute(Cmd::COUNT), Some(2));
+        assert_eq!(db.execute(Cmd::GET("b".to_string())), Some(-42));
+        assert_eq!(db.execute(Cmd::DELETE("a".to_string())), Some(3));
+        assert_eq!(db.execute(Cmd::COUNT), Some(1));
+        assert_eq!(db.execute(Cmd::GET("a".to_string())), None);
+        assert_eq!(db.execute(Cmd::GET("b".to_string())), Some(-42));
+        assert_eq!(db.execute(Cmd::ADD("b".to_string(), 100)), Some(58));
+        assert_eq!(db.execute(Cmd::COUNT), Some(1));
+        assert_eq!(db.execute(Cmd::GET("b".to_string())), Some(58));
+        assert_eq!(db.execute(Cmd::ADD("b".to_string(), 0)), Some(58));
+        assert_eq!(db.execute(Cmd::ADD("c".to_string(), 0)), Some(0));
+        assert_eq!(db.execute(Cmd::COUNT), Some(2));
+        assert_eq!(db.execute(Cmd::GET("b".to_string())), Some(58));
+        assert_eq!(db.execute(Cmd::GET("c".to_string())), Some(0));
+        assert_eq!(db.execute(Cmd::ADD("c".to_string(), -1)), Some(-1));
+        assert_eq!(db.execute(Cmd::COUNT), Some(2));
+        assert_eq!(db.execute(Cmd::GET("c".to_string())), Some(-1));
     }
 }
