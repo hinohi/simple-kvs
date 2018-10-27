@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use std::string::String;
 
 #[derive(Debug)]
@@ -9,8 +10,9 @@ pub enum Cmd {
     COUNT,
 }
 
-impl Cmd {
-    pub fn from_string(s: String) -> Result<Self, String> {
+impl FromStr for Cmd {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut it = s.trim().split(' ');
         match (it.next(), it.next()) {
             (Some("GET"), Some(key)) => {

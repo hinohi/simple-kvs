@@ -1,6 +1,7 @@
 use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::iter::Iterator;
 use std::net::{TcpListener, TcpStream};
+use std::str::FromStr;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -87,7 +88,7 @@ fn client_handler(db: &DB, stream: TcpStream) {
         if buf.is_empty() {
             break;
         }
-        let cmd = match Cmd::from_string(buf) {
+        let cmd = match Cmd::from_str(&buf) {
             Ok(c) => c,
             Err(e) => {
                 let mut msg = e + "\n";
