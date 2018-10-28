@@ -1,34 +1,13 @@
 use std::io::{BufRead, BufReader, BufWriter, Write};
-use std::iter::Iterator;
 use std::net::{TcpListener, TcpStream};
 use std::str::FromStr;
-use std::sync::mpsc::{channel, Receiver, Sender};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::thread;
+
+use shared_channel::{shared_channel, SharedReceiver};
 
 use cmd::Cmd;
 use db::DB;
-
-struct SharedReceiver<T>(Arc<Mutex<Receiver<T>>>);
-
-impl<T> Iterator for SharedReceiver<T> {
-    type Item = T;
-    fn next(&mut self) -> Option<Self::Item> {
-        let guard = self.0.lock().unwrap();
-        guard.recv().ok()
-    }
-}
-
-impl<T> Clone for SharedReceiver<T> {
-    fn clone(&self) -> Self {
-        SharedReceiver(Arc::clone(&self.0))
-    }
-}
-
-fn shared_channel<T>() -> (Sender<T>, SharedReceiver<T>) {
-    let (sender, receiver) = channel();
-    (sender, SharedReceiver(Arc::new(Mutex::new(receiver))))
-}
 
 pub struct Server {
     addr: String,
@@ -67,7 +46,7 @@ impl Server {
 }
 
 fn worker(db: Arc<DB>, receiver: SharedReceiver<Option<TcpStream>>) {
-    for i in receiver {
+    for i in receiver.iter() {
         if let Some(stream) = i {
             client_handler(&db, stream);
         } else {

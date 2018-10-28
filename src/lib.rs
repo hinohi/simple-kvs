@@ -1,3 +1,5 @@
+extern crate shared_channel;
+
 mod client;
 mod cmd;
 mod db;
