@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::sync::RwLock;
 
-use cmd::Cmd;
+use query::Query;
 
 pub struct DB {
     n: usize,
@@ -19,13 +19,13 @@ impl DB {
         DB { n, dbs }
     }
 
-    pub fn execute(&self, cmd: Cmd) -> Option<i64> {
-        match cmd {
-            Cmd::GET(key) => self.do_get(key),
-            Cmd::SET(key, value) => self.do_set(key, value),
-            Cmd::ADD(key, value) => self.do_add(key, value),
-            Cmd::DELETE(key) => self.do_delete(key),
-            Cmd::COUNT => self.do_count(),
+    pub fn execute(&self, query: Query) -> Option<i64> {
+        match query {
+            Query::GET(key) => self.do_get(key),
+            Query::SET(key, value) => self.do_set(key, value),
+            Query::ADD(key, value) => self.do_add(key, value),
+            Query::DELETE(key) => self.do_delete(key),
+            Query::COUNT => self.do_count(),
         }
     }
 
@@ -68,45 +68,45 @@ impl DB {
 
 #[cfg(test)]
 mod tests {
-    use cmd::Cmd;
+    use query::Query;
     use db::DB;
 
     #[test]
     fn simple_cmd_execute() {
         let db = DB::new(1);
-        assert_eq!(db.execute(Cmd::COUNT), Some(0));
-        assert_eq!(db.execute(Cmd::GET("a".to_string())), None);
-        assert_eq!(db.execute(Cmd::DELETE("a".to_string())), None);
-        assert_eq!(db.execute(Cmd::SET("a".to_string(), 3)), None);
-        assert_eq!(db.execute(Cmd::COUNT), Some(1));
-        assert_eq!(db.execute(Cmd::GET("a".to_string())), Some(3));
-        assert_eq!(db.execute(Cmd::SET("b".to_string(), 10)), None);
-        assert_eq!(db.execute(Cmd::COUNT), Some(2));
-        assert_eq!(db.execute(Cmd::GET("b".to_string())), Some(10));
-        assert_eq!(db.execute(Cmd::SET("b".to_string(), -42)), Some(10));
-        assert_eq!(db.execute(Cmd::COUNT), Some(2));
-        assert_eq!(db.execute(Cmd::GET("b".to_string())), Some(-42));
-        assert_eq!(db.execute(Cmd::DELETE("a".to_string())), Some(3));
-        assert_eq!(db.execute(Cmd::COUNT), Some(1));
-        assert_eq!(db.execute(Cmd::GET("a".to_string())), None);
-        assert_eq!(db.execute(Cmd::GET("b".to_string())), Some(-42));
-        assert_eq!(db.execute(Cmd::ADD("b".to_string(), 100)), Some(58));
-        assert_eq!(db.execute(Cmd::COUNT), Some(1));
-        assert_eq!(db.execute(Cmd::GET("b".to_string())), Some(58));
-        assert_eq!(db.execute(Cmd::ADD("b".to_string(), 0)), Some(58));
-        assert_eq!(db.execute(Cmd::ADD("c".to_string(), 0)), Some(0));
-        assert_eq!(db.execute(Cmd::COUNT), Some(2));
-        assert_eq!(db.execute(Cmd::GET("b".to_string())), Some(58));
-        assert_eq!(db.execute(Cmd::GET("c".to_string())), Some(0));
-        assert_eq!(db.execute(Cmd::ADD("c".to_string(), -1)), Some(-1));
-        assert_eq!(db.execute(Cmd::COUNT), Some(2));
-        assert_eq!(db.execute(Cmd::GET("c".to_string())), Some(-1));
+        assert_eq!(db.execute(Query::COUNT), Some(0));
+        assert_eq!(db.execute(Query::GET("a".to_string())), None);
+        assert_eq!(db.execute(Query::DELETE("a".to_string())), None);
+        assert_eq!(db.execute(Query::SET("a".to_string(), 3)), None);
+        assert_eq!(db.execute(Query::COUNT), Some(1));
+        assert_eq!(db.execute(Query::GET("a".to_string())), Some(3));
+        assert_eq!(db.execute(Query::SET("b".to_string(), 10)), None);
+        assert_eq!(db.execute(Query::COUNT), Some(2));
+        assert_eq!(db.execute(Query::GET("b".to_string())), Some(10));
+        assert_eq!(db.execute(Query::SET("b".to_string(), -42)), Some(10));
+        assert_eq!(db.execute(Query::COUNT), Some(2));
+        assert_eq!(db.execute(Query::GET("b".to_string())), Some(-42));
+        assert_eq!(db.execute(Query::DELETE("a".to_string())), Some(3));
+        assert_eq!(db.execute(Query::COUNT), Some(1));
+        assert_eq!(db.execute(Query::GET("a".to_string())), None);
+        assert_eq!(db.execute(Query::GET("b".to_string())), Some(-42));
+        assert_eq!(db.execute(Query::ADD("b".to_string(), 100)), Some(58));
+        assert_eq!(db.execute(Query::COUNT), Some(1));
+        assert_eq!(db.execute(Query::GET("b".to_string())), Some(58));
+        assert_eq!(db.execute(Query::ADD("b".to_string(), 0)), Some(58));
+        assert_eq!(db.execute(Query::ADD("c".to_string(), 0)), Some(0));
+        assert_eq!(db.execute(Query::COUNT), Some(2));
+        assert_eq!(db.execute(Query::GET("b".to_string())), Some(58));
+        assert_eq!(db.execute(Query::GET("c".to_string())), Some(0));
+        assert_eq!(db.execute(Query::ADD("c".to_string(), -1)), Some(-1));
+        assert_eq!(db.execute(Query::COUNT), Some(2));
+        assert_eq!(db.execute(Query::GET("c".to_string())), Some(-1));
     }
     #[test]
     fn overflow_add() {
         use std::i64;
         let db = DB::new(1);
-        db.execute(Cmd::SET("key".to_string(), i64::MAX));
-        assert_eq!(db.execute(Cmd::ADD("key".to_string(), 1)), Some(i64::MIN));
+        db.execute(Query::SET("key".to_string(), i64::MAX));
+        assert_eq!(db.execute(Query::ADD("key".to_string(), 1)), Some(i64::MIN));
     }
 }

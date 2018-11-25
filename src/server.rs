@@ -6,7 +6,7 @@ use std::thread;
 
 use shared_channel::{shared_channel, SharedReceiver};
 
-use cmd::Cmd;
+use query::Query;
 use db::DB;
 
 pub struct Server {
@@ -67,7 +67,7 @@ fn client_handler(db: &DB, stream: TcpStream) {
         if buf.is_empty() {
             break;
         }
-        let cmd = match Cmd::from_str(&buf) {
+        let cmd = match Query::from_str(&buf) {
             Ok(c) => c,
             Err(e) => {
                 let mut msg = e + "\n";

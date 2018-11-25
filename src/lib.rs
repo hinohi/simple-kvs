@@ -1,10 +1,10 @@
 extern crate shared_channel;
 
 mod client;
-mod cmd;
+mod query;
 mod db;
 mod server;
 
 pub use client::Client;
-pub use cmd::Cmd;
+pub use query::Query;
 pub use server::Server;
