@@ -24,7 +24,7 @@ impl Server {
         }
     }
 
-    pub fn run_forever(&self) {
+    pub fn run_forever(&self) -> ! {
         let listener = TcpListener::bind(&self.addr).unwrap();
 
         let (sender, receiver) = shared_channel();

@@ -20,7 +20,7 @@ fn main() {
 
     let args: Vec<String> = env::args().collect();
     let usage = r#"Usage:
-    ./cmd client addr "cmd string""#;
+    ./cmd addr "cmd string""#;
 
     if args.len() <= 2 {
         println!("{}", usage);
