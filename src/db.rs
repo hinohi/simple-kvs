@@ -29,31 +29,31 @@ impl DB {
         }
     }
 
-    fn key_hash(&self, key: &str) -> usize {
+    fn key_slot(&self, key: &str) -> usize {
         let mut s = DefaultHasher::new();
         key.hash(&mut s);
         s.finish() as usize % self.n
     }
 
     fn do_get(&self, key: String) -> Option<i64> {
-        let db = self.dbs[self.key_hash(&key)].read().unwrap();
+        let db = self.dbs[self.key_slot(&key)].read().unwrap();
         db.get(&key).and_then(|v| Some(*v))
     }
 
     fn do_set(&self, key: String, value: i64) -> Option<i64> {
-        let mut db = self.dbs[self.key_hash(&key)].write().unwrap();
+        let mut db = self.dbs[self.key_slot(&key)].write().unwrap();
         db.insert(key, value)
     }
 
     fn do_add(&self, key: String, value: i64) -> Option<i64> {
-        let mut db = self.dbs[self.key_hash(&key)].write().unwrap();
+        let mut db = self.dbs[self.key_slot(&key)].write().unwrap();
         let v = db.entry(key).or_insert(0);
         *v = v.wrapping_add(value);
         Some(*v)
     }
 
     fn do_delete(&self, key: String) -> Option<i64> {
-        let mut db = self.dbs[self.key_hash(&key)].write().unwrap();
+        let mut db = self.dbs[self.key_slot(&key)].write().unwrap();
         db.remove(&key)
     }
     fn do_count(&self) -> Option<i64> {
@@ -68,8 +68,8 @@ impl DB {
 
 #[cfg(test)]
 mod tests {
-    use query::Query;
     use db::DB;
+    use query::Query;
 
     #[test]
     fn simple_cmd_execute() {
